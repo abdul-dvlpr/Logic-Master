@@ -1,0 +1,594 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Logic Master Deluxe FX</title>
+    <style>
+        @import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+        :root {
+            --primary-color: #3498db; /* Vibrant Blue */
+            --secondary-color: #f39c12; /* Orange for Hints */
+            --skip-color: #95a5a6; /* Grey for Skip */
+            --music-control-color: #8e44ad; /* Purple for Music Control */
+            --success-color: #2ecc71; /* Green */
+            --error-color: #e74c3c; /* Red */
+            --light-bg: #ecf0f1;
+            --dark-text: #2c3e50;
+            --container-bg: #ffffff;
+            --border-radius: 8px;
+            --box-shadow: 0 10px 25px rgba(0, 0, 0, 0.1);
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'Poppins', sans-serif;
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            background: linear-gradient(135deg, #6dd5ed, #2193b0);
+            color: var(--dark-text);
+            padding: 15px;
+        }
+
+        #splash-screen {
+            position: fixed; top: 0; left: 0; width: 100%; height: 100%;
+            background: linear-gradient(135deg, #0f2027, #203a43, #2c5364);
+            display: flex; justify-content: center; align-items: center;
+            z-index: 2000; flex-direction: column; color: var(--light-bg);
+        }
+        #splash-logo {
+            font-size: 3.5em; font-weight: 700; letter-spacing: 2px;
+            margin-bottom: 20px; text-shadow: 2px 2px 5px rgba(0,0,0,0.3);
+        }
+        #splash-logo .l1 { color: #3498db; } #splash-logo .l2 { color: #e74c3c; }
+        #splash-logo .l3 { color: #f1c40f; } #splash-logo .l4 { color: #2ecc71; }
+        .loader {
+            border: 5px solid #f3f3f3; border-top: 5px solid var(--primary-color);
+            border-radius: 50%; width: 50px; height: 50px;
+            animation: spin 1s linear infinite;
+        }
+        @keyframes spin { 0% { transform: rotate(0deg); } 100% { transform: rotate(360deg); } }
+
+        .game-container {
+            background-color: var(--container-bg); padding: 25px 30px;
+            border-radius: var(--border-radius); box-shadow: var(--box-shadow);
+            width: 100%; max-width: 550px; text-align: center;
+            display: none; flex-direction: column;
+        }
+
+        header {
+            margin-bottom: 25px; border-bottom: 2px solid var(--light-bg);
+            padding-bottom: 20px;
+        }
+        header h1 {
+            color: var(--primary-color); font-size: 2em; font-weight: 700;
+            margin: 0 0 10px 0;
+        }
+        .level-indicator {
+            font-size: 1.3em; font-weight: 600; color: var(--dark-text);
+        }
+
+        #game-area {
+            min-height: 220px; display: flex; flex-direction: column;
+            justify-content: space-between; align-items: center; margin-bottom: 25px;
+        }
+        #question-container { margin-bottom: 20px; width: 100%; }
+        #question-text {
+            font-size: 1.35em; margin-bottom: 20px; color: #34495e; line-height: 1.6;
+        }
+        #question-image-container { margin-bottom: 20px; }
+        #question-image-container img {
+            max-width: 100%; max-height: 180px;
+            border-radius: calc(var(--border-radius) / 2); object-fit: contain;
+            box-shadow: 0 4px 10px rgba(0,0,0,0.08);
+        }
+        #interactive-elements-container {
+            display: flex; flex-wrap: wrap; justify-content: center;
+            gap: 12px; margin-bottom: 20px;
+        }
+        #answer-input-container {
+            display: flex; justify-content: center; align-items: center;
+            gap: 10px; width: 100%;
+        }
+        #answer-input-container input[type="text"] {
+            padding: 12px 15px; border: 2px solid #bdc3c7;
+            border-radius: var(--border-radius); font-size: 1em;
+            font-family: 'Poppins', sans-serif; width: 65%;
+            transition: border-color 0.3s ease;
+        }
+        #answer-input-container input[type="text"]:focus {
+            border-color: var(--primary-color); outline: none;
+        }
+
+        button, .button-style {
+            padding: 12px 20px; border: none; border-radius: var(--border-radius);
+            font-size: 1em; font-weight: 600; font-family: 'Poppins', sans-serif;
+            cursor: pointer; transition: all 0.3s ease; color: white;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1); min-width: 120px; /* Ensure decent width */
+        }
+        button:hover, .button-style:hover {
+            transform: translateY(-2px); box-shadow: 0 6px 12px rgba(0,0,0,0.15);
+        }
+        button:active, .button-style:active {
+            transform: translateY(0px); box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        }
+        button:disabled {
+            opacity: 0.7; cursor: not-allowed; transform: none;
+            box-shadow: 0 4px 6px rgba(0,0,0,0.1);
+        }
+
+        #answer-input-container button { background-color: var(--primary-color); }
+        footer button#hint-button { background-color: var(--secondary-color); }
+        footer button#skip-button { background-color: var(--skip-color); }
+        footer button#mute-button { background-color: var(--music-control-color); }
+
+
+        .feedback {
+            margin-top: 20px; font-size: 1.2em; font-weight: 600;
+            min-height: 25px; padding: 8px; border-radius: var(--border-radius);
+        }
+        .feedback.correct { color: var(--success-color); background-color: #e6ffed; border: 1px solid var(--success-color); }
+        .feedback.incorrect { color: var(--error-color); background-color: #ffeeed; border: 1px solid var(--error-color); }
+        .hidden { display: none !important; }
+
+        .modal {
+            display: none; position: fixed; z-index: 1000; left: 0; top: 0;
+            width: 100%; height: 100%; overflow: auto;
+            background-color: rgba(0,0,0,0.7); backdrop-filter: blur(3px);
+        }
+        .modal-content {
+            background-color: var(--container-bg); margin: 15% auto; padding: 30px;
+            border-radius: var(--border-radius); width: 90%; max-width: 450px;
+            text-align: center; position: relative; box-shadow: 0 10px 30px rgba(0,0,0,0.2);
+        }
+        .close-button {
+            color: #aaa; position: absolute; top: 15px; right: 20px;
+            font-size: 30px; font-weight: bold;
+        }
+        .close-button:hover, .close-button:focus {
+            color: var(--dark-text); text-decoration: none; cursor: pointer;
+        }
+        #modal-text { font-size: 1.1em; line-height: 1.6; }
+
+        .clickable-item.image-button {
+            background: transparent; border: 3px solid transparent; padding: 5px;
+            cursor: pointer; border-radius: calc(var(--border-radius) + 2px) ;
+            transition: border-color 0.2s ease;
+        }
+        .clickable-item.image-button:hover { border-color: var(--primary-color); }
+        .clickable-item.image-button img {
+            display: block; width: 60px; height: 60px;
+            border-radius: var(--border-radius);
+        }
+        .clickable-item { background-color: var(--primary-color); color: white; }
+        .clickable-item:hover { background-color: #2980b9; }
+
+        footer {
+            margin-top: auto; padding-top: 20px; border-top: 2px solid var(--light-bg);
+            display: flex; justify-content: space-around; flex-wrap: wrap; gap: 10px;
+        }
+
+        @keyframes shake {
+          0%, 100% { transform: translateX(0); }
+          10%, 30%, 50%, 70%, 90% { transform: translateX(-8px); }
+          20%, 40%, 60%, 80% { transform: translateX(8px); }
+        }
+        .shake { animation: shake 0.4s cubic-bezier(.36,.07,.19,.97) both; }
+    </style>
+</head>
+<body>
+    <div id="splash-screen">
+        <div id="splash-logo">
+            <span class="l1">L</span><span class="l2">o</span><span class="l3">g</span><span class="l4">i</span>c
+            Master
+        </div>
+        <div class="loader"></div>
+    </div>
+
+    <div class="game-container">
+        <header>
+            <h1>Logic Master</h1>
+            <div class="level-indicator">Level: <span id="current-level">1</span></div>
+        </header>
+
+        <main id="game-area">
+            <div id="question-container">
+                <p id="question-text"></p>
+                <div id="question-image-container"></div>
+                <div id="interactive-elements-container"></div>
+            </div>
+            <div id="answer-input-container"></div>
+            <div id="feedback-message" class="feedback"></div>
+        </main>
+
+        <footer>
+            <button id="hint-button">Hint (<span id="hints-remaining">3</span>)</button>
+            <button id="skip-button">Skip Level</button>
+            <button id="mute-button">🎵 Music On</button>
+        </footer>
+    </div>
+
+    <div id="modal" class="modal">
+        <div class="modal-content">
+            <span class="close-button">×</span>
+            <p id="modal-text"></p>
+        </div>
+    </div>
+
+    <script>
+        document.addEventListener('DOMContentLoaded', () => {
+            const splashScreen = document.getElementById('splash-screen');
+            const gameContainer = document.querySelector('.game-container');
+            const currentLevelDisplay = document.getElementById('current-level');
+            const questionTextDisplay = document.getElementById('question-text');
+            const questionImageContainer = document.getElementById('question-image-container');
+            const interactiveElementsContainer = document.getElementById('interactive-elements-container');
+            const answerInputContainer = document.getElementById('answer-input-container');
+            const feedbackMessageDisplay = document.getElementById('feedback-message');
+            const hintButton = document.getElementById('hint-button');
+            const hintsRemainingDisplay = document.getElementById('hints-remaining');
+            const skipButton = document.getElementById('skip-button');
+            const gameArea = document.getElementById('game-area');
+            const modal = document.getElementById('modal');
+            const modalText = document.getElementById('modal-text');
+            const closeButton = document.querySelector('.close-button');
+            const muteButton = document.getElementById('mute-button');
+
+            // --- Background Music Element ---
+            const bgMusic = document.createElement('audio');
+            bgMusic.id = 'bg-music';
+            bgMusic.loop = true;
+            // USER ACTION REQUIRED: Place 'background_music.mp3' in your 'sounds/' folder
+            bgMusic.src = 'sounds/background_music.mp3';
+            bgMusic.volume = 0.15; // Start with a very soft volume
+            document.body.appendChild(bgMusic); // Add to DOM to enable control
+
+            // --- Sound Effects ---
+            // USER ACTION REQUIRED: Create a 'sounds' folder next to this HTML file.
+            // Inside 'sounds/', place the following MP3 files:
+            // - correct.mp3
+            // - incorrect.mp3
+            // - click.mp3
+            // - hint.mp3
+            // - skip.mp3
+            // - level_complete.mp3
+            // - background_music.mp3 (as mentioned above)
+            const sounds = {
+                correct: new Audio('sounds/correct.mp3'),
+                incorrect: new Audio('sounds/incorrect.mp3'),
+                click: new Audio('sounds/click.mp3'),
+                hint: new Audio('sounds/hint.mp3'),
+                skip: new Audio('sounds/skip.mp3'),
+                levelComplete: new Audio('sounds/level_complete.mp3')
+            };
+
+            function playSound(soundName) {
+                if (sounds[soundName]) {
+                    sounds[soundName].currentTime = 0;
+                    sounds[soundName].play().catch(e => console.warn(`Audio play failed for ${soundName}:`, e));
+                }
+            }
+
+            let currentLevelIndex = 0;
+            let hintsRemaining = 3;
+            let autoAdvanceTimeout;
+
+            const catNormalSVG = "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cstyle%3E.cat-body%7Bfill:%23D2B48C%3Bstroke:%23A0522D%3Bstroke-width:1.5%3B%7D.cat-feature%7Bfill:%23502A00%3B%7D.cat-ear%7Bfill:%23D2B48C%3Bstroke:%23A0522D%3Bstroke-width:1.5%3B%7D%3C%2Fstyle%3E%3Ccircle%20class%3D%22cat-body%22%20cx%3D%2230%22%20cy%3D%2233%22%20r%3D%2218%22%2F%3E%3Cpath%20class%3D%22cat-ear%22%20d%3D%22M15%2020%20Q12%205%2025%2015%20Z%22%2F%3E%3Cpath%20class%3D%22cat-ear%22%20d%3D%22M45%2020%20Q48%205%2035%2015%20Z%22%2F%3E%3Ccircle%20class%3D%22cat-feature%22%20cx%3D%2223%22%20cy%3D%2228%22%20r%3D%223%22%2F%3E%3Ccircle%20class%3D%22cat-feature%22%20cx%3D%2237%22%20cy%3D%2228%22%20r%3D%223%22%2F%3E%3Cpath%20class%3D%22cat-feature%22%20d%3D%22M25%2038%20Q30%2042%2035%2038%22%20stroke%3D%22%23502A00%22%20stroke-width%3D%221.5%22%20fill%3D%22transparent%22%2F%3E%3C%2Fsvg%3E";
+            const catDifferentSVG = "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2260%22%20height%3D%2260%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cstyle%3E.cat-body%7Bfill:%23D2B48C%3Bstroke:%23A0522D%3Bstroke-width:1.5%3B%7D.cat-feature%7Bfill:%23502A00%3B%7D.cat-ear%7Bfill:%23D2B48C%3Bstroke:%23A0522D%3Bstroke-width:1.5%3B%7D%3C%2Fstyle%3E%3Ccircle%20class%3D%22cat-body%22%20cx%3D%2230%22%20cy%3D%2233%22%20r%3D%2218%22%2F%3E%3Cpath%20class%3D%22cat-ear%22%20d%3D%22M15%2020%20Q12%205%2025%2015%20Z%22%2F%3E%3Cpath%20class%3D%22cat-ear%22%20d%3D%22M45%2020%20Q48%2010%2035%2015%20Z%22%2F%3E%3Ccircle%20class%3D%22cat-feature%22%20cx%3D%2223%22%20cy%3D%2228%22%20r%3D%223%22%2F%3E%3Ccircle%20class%3D%22cat-feature%22%20cx%3D%2237%22%20cy%3D%2228%22%20r%3D%223%22%2F%3E%3Cpath%20class%3D%22cat-feature%22%20d%3D%22M25%2038%20Q30%2042%2035%2038%22%20stroke%3D%22%23502A00%22%20stroke-width%3D%221.5%22%20fill%3D%22transparent%22%2F%3E%3C%2Fsvg%3E";
+            const lightbulbOffSVG = "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2260%22%20height%3D%2290%22%20viewBox%3D%220%200%2060%2090%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cpath%20d%3D%22M22%2060h16v10h-16z%22%20fill%3D%22%23BDBDBD%22%2F%3E%3Cpath%20d%3D%22M20%2070h20v5h-20z%22%20fill%3D%22%239E9E9E%22%2F%3E%3Cpath%20d%3D%22M25%2075h10v10h-10z%22%20fill%3D%22%23757575%22%2F%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2235%22%20r%3D%2225%22%20fill%3D%22%23E0E0E0%22%20stroke%3D%22%23BDBDBD%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E";
+            const lightbulbOnSVG = "data:image/svg+xml;charset=UTF-8,%3Csvg%20width%3D%2260%22%20height%3D%2290%22%20viewBox%3D%220%200%2060%2090%22%20xmlns%3D%22http%3A%2F%2Fwww.w3.org%2F2000%2Fsvg%22%3E%3Cdefs%3E%3CradialGradient%20id%3D%22glow%22%20cx%3D%2250%25%22%20cy%3D%2250%25%22%20r%3D%2270%25%22%20fx%3D%2250%25%22%20fy%3D%2250%25%22%3E%3Cstop%20offset%3D%220%25%22%20style%3D%22stop-color:rgb(255,255,224);stop-opacity:1%22%20%2F%3E%3Cstop%20offset%3D%22100%25%22%20style%3D%22stop-color:rgb(255,255,0);stop-opacity:0.5%22%20%2F%3E%3C%2FradialGradient%3E%3C%2Fdefs%3E%3Cpath%20d%3D%22M22%2060h16v10h-16z%22%20fill%3D%22%23BDBDBD%22%2F%3E%3Cpath%20d%3D%22M20%2070h20v5h-20z%22%20fill%3D%22%239E9E9E%22%2F%3E%3Cpath%20d%3D%22M25%2075h10v10h-10z%22%20fill%3D%22%23757575%22%2F%3E%3Ccircle%20cx%3D%2230%22%20cy%3D%2235%22%20r%3D%2225%22%20fill%3D%22url(%23glow)%22%20stroke%3D%22%23FFD700%22%20stroke-width%3D%222%22%2F%3E%3C%2Fsvg%3E";
+
+            const levels = [ /* ... Your existing levels ... */
+                {
+                    question: "Which cat has a slightly different ear?",
+                    type: "image_button_click",
+                    interactiveElements: [
+                        { id: "cat1", correct: false, imgSrc: catNormalSVG },
+                        { id: "cat2", correct: true,  imgSrc: catDifferentSVG },
+                        { id: "cat3", correct: false, imgSrc: catNormalSVG },
+                    ],
+                    hint: "Observe the shape and length of their ears very carefully.",
+                    solutionLogic: (clickedId) => levels[currentLevelIndex].interactiveElements.find(el => el.id === clickedId)?.correct || false
+                },
+                {
+                    question: "Calculate: 5 + 5 × 5 - 5 ÷ 5",
+                    type: "text_input",
+                    answer: "29",
+                    hint: "Multiplication and Division before Addition and Subtraction (PEMDAS/BODMAS).",
+                    validationType: "exact_match"
+                },
+                {
+                    question: "Flick the switch to illuminate the bulb.",
+                    type: "interactive_button",
+                    image_off: lightbulbOffSVG,
+                    image_on: lightbulbOnSVG,
+                    buttonText: "Switch",
+                    hint: "The most direct interaction might be the key.",
+                    isSolvedState: false,
+                    action: function() {
+                        this.isSolvedState = !this.isSolvedState;
+                        const img = questionImageContainer.querySelector('img');
+                        if (img) img.src = this.isSolvedState ? this.image_on : this.image_off;
+                        if (this.isSolvedState) handleCorrectAnswer();
+                        else {
+                            feedbackMessageDisplay.textContent = "It's dark again...";
+                            feedbackMessageDisplay.className = 'feedback';
+                        }
+                    }
+                },
+                {
+                    question: "What is the primary color of a ripe lemon?",
+                    type: "text_input_options",
+                    options: ["yellow", "bright yellow"],
+                    hint: "Think of a common citrus fruit often used in lemonade.",
+                    validationType: "any_match_ignore_case"
+                },
+                {
+                    question: "How many apples are shown? (Be careful!)",
+                    type: "text_input",
+                    image: "images/level4_apples.png",
+                    answer: "3",
+                    hint: "Not everything that looks like fruit might be the fruit in question.",
+                    validationType: "exact_match"
+                },
+                 {
+                    question: "I speak without a mouth and hear without ears. I have no body, but I come alive with wind. What am I?",
+                    type: "text_input",
+                    answer: "an echo",
+                    hint: "Think about sound and reflection.",
+                    validationType: "includes"
+                }
+            ];
+
+            function initGame() {
+                splashScreen.style.display = 'none';
+                gameContainer.style.display = 'flex';
+                loadLevel(currentLevelIndex);
+
+                // Attempt to play background music (may be blocked by browser)
+                bgMusic.play()
+                    .then(() => {
+                        console.log("Background music started.");
+                        // If user had a preference for muted, apply it here
+                        // e.g. if (localStorage.getItem('musicMuted') === 'true') bgMusic.muted = true;
+                    })
+                    .catch(error => {
+                        console.warn("Background music autoplay blocked. User interaction (e.g., music button) needed.", error);
+                    })
+                    .finally(() => {
+                        updateMuteButtonVisuals(); // Update button based on play attempt outcome
+                    });
+            }
+            setTimeout(initGame, 2500); // Splash screen duration
+
+            function updateMuteButtonVisuals() {
+                if (!muteButton) return;
+                if (bgMusic.paused && !bgMusic.ended && bgMusic.currentTime === 0) { // True if autoplay failed and never started
+                    muteButton.textContent = '▶️ Play Music';
+                } else if (bgMusic.muted || bgMusic.volume === 0) {
+                    muteButton.textContent = '🔇 Music Off';
+                } else {
+                    muteButton.textContent = '🎵 Music On';
+                }
+            }
+
+            muteButton.addEventListener('click', () => {
+                playSound('click');
+                if (bgMusic.paused && !bgMusic.ended) { // If music is paused (e.g., autoplay failed or explicitly paused by user)
+                    bgMusic.play().then(() => {
+                        bgMusic.muted = false; // Ensure unmuted when played this way
+                        updateMuteButtonVisuals();
+                    }).catch(e => console.error("Error playing music on click:", e));
+                } else { // Music is playing or has played before
+                    bgMusic.muted = !bgMusic.muted;
+                    updateMuteButtonVisuals();
+                }
+            });
+
+
+            function loadLevel(levelIndex) { /* ... Same as before ... */
+                clearTimeout(autoAdvanceTimeout);
+
+                if (levelIndex >= levels.length) {
+                    showGameComplete();
+                    return;
+                }
+
+                const level = levels[levelIndex];
+                currentLevelDisplay.textContent = levelIndex + 1;
+                questionTextDisplay.textContent = level.question;
+
+                questionImageContainer.innerHTML = '';
+                interactiveElementsContainer.innerHTML = '';
+                answerInputContainer.innerHTML = '';
+                feedbackMessageDisplay.textContent = '';
+                feedbackMessageDisplay.className = 'feedback';
+
+                hintButton.disabled = false;
+                skipButton.disabled = false;
+
+                if (level.type === "interactive_button" && level.hasOwnProperty('isSolvedState')) {
+                    level.isSolvedState = false;
+                }
+
+                if (level.image) {
+                    const img = document.createElement('img');
+                    img.src = level.image;
+                    img.alt = "Level Visual";
+                    questionImageContainer.appendChild(img);
+                } else if (level.image_off) {
+                    const img = document.createElement('img');
+                    img.src = level.image_off;
+                    img.alt = "Level Visual";
+                    questionImageContainer.appendChild(img);
+                }
+
+                switch (level.type) {
+                    case "text_input":
+                    case "text_input_options":
+                        const input = document.createElement('input');
+                        input.type = "text";
+                        input.id = "answer-field";
+                        input.placeholder = "Type your answer...";
+                        const submitButton = document.createElement('button');
+                        submitButton.textContent = "Check";
+                        submitButton.onclick = () => checkAnswer(input.value.trim());
+                        answerInputContainer.appendChild(input);
+                        answerInputContainer.appendChild(submitButton);
+                        input.addEventListener('keypress', (e) => {
+                            if (e.key === 'Enter') checkAnswer(input.value.trim());
+                        });
+                        break;
+
+                    case "image_button_click":
+                        level.interactiveElements.forEach(el => {
+                            const button = document.createElement('button');
+                            button.classList.add('clickable-item', 'image-button');
+                            const img = document.createElement('img');
+                            img.src = el.imgSrc;
+                            img.alt = el.id;
+                            button.appendChild(img);
+                            button.onclick = () => {
+                                playSound('click');
+                                if (level.solutionLogic(el.id)) handleCorrectAnswer();
+                                else handleIncorrectAnswer();
+                            };
+                            interactiveElementsContainer.appendChild(button);
+                        });
+                        break;
+
+                     case "interactive_button":
+                        const actionButton = document.createElement('button');
+                        actionButton.textContent = level.buttonText || "Interact";
+                        actionButton.classList.add('button-style');
+                        actionButton.style.backgroundColor = 'var(--primary-color)';
+                        actionButton.onclick = () => {
+                            playSound('click');
+                            level.action();
+                        };
+                        interactiveElementsContainer.appendChild(actionButton);
+                        break;
+                }
+                updateHintsDisplay();
+            }
+
+            function checkAnswer(userAnswer) { /* ... Same as before ... */
+                playSound('click');
+                const level = levels[currentLevelIndex];
+                let isCorrect = false;
+
+                if (!level) return;
+
+                switch (level.validationType) {
+                    case "exact_match":
+                        isCorrect = userAnswer.toLowerCase() === String(level.answer).toLowerCase();
+                        break;
+                    case "any_match_ignore_case":
+                        isCorrect = level.options.some(opt => opt.toLowerCase() === userAnswer.toLowerCase());
+                        break;
+                    case "includes":
+                        isCorrect = String(level.answer).toLowerCase().includes(userAnswer.toLowerCase()) && userAnswer.length > 2;
+                        break;
+                    default:
+                        if (level.answer !== undefined) {
+                             isCorrect = userAnswer.toLowerCase() === String(level.answer).toLowerCase();
+                        }
+                        break;
+                }
+
+                if (isCorrect) handleCorrectAnswer();
+                else handleIncorrectAnswer();
+            }
+
+            const positiveMessages = ["Great!", "Well Done!", "Awesome!", "You got it!", "Perfect!", "Excellent!", "Superb!"];
+
+            function handleCorrectAnswer() { /* ... Same as before, uses playSound('levelComplete') ... */
+                playSound('levelComplete');
+                const randomMessage = positiveMessages[Math.floor(Math.random() * positiveMessages.length)];
+                feedbackMessageDisplay.textContent = randomMessage;
+                feedbackMessageDisplay.className = 'feedback correct';
+
+                hintButton.disabled = true;
+                skipButton.disabled = true;
+                answerInputContainer.querySelectorAll('input, button').forEach(el => el.disabled = true);
+                interactiveElementsContainer.querySelectorAll('button').forEach(el => el.disabled = true);
+
+                autoAdvanceTimeout = setTimeout(() => {
+                    goToNextLevel();
+                }, 2000);
+            }
+
+            function handleIncorrectAnswer() { /* ... Same as before ... */
+                playSound('incorrect');
+                feedbackMessageDisplay.textContent = "Not quite! Try again.";
+                feedbackMessageDisplay.className = 'feedback incorrect';
+                gameArea.classList.add('shake');
+                setTimeout(() => gameArea.classList.remove('shake'), 400);
+            }
+
+            function showHint() { /* ... Same as before ... */
+                if (hintsRemaining > 0) {
+                    playSound('hint');
+                    const level = levels[currentLevelIndex];
+                    modalText.textContent = `Hint: ${level.hint}`;
+                    modal.style.display = "block";
+                    hintsRemaining--;
+                    updateHintsDisplay();
+                    if (hintsRemaining === 0) hintButton.disabled = true;
+                }
+            }
+
+            function skipLevel() { /* ... Same as before ... */
+                clearTimeout(autoAdvanceTimeout);
+                playSound('skip');
+                const level = levels[currentLevelIndex];
+                let answerInfo = "The solution was tricky!";
+                if (level.answer) answerInfo = `The answer was: ${level.answer}`;
+
+                feedbackMessageDisplay.textContent = `Skipped Level. ${answerInfo}`;
+                feedbackMessageDisplay.className = 'feedback';
+                currentLevelIndex++;
+                loadLevel(currentLevelIndex);
+            }
+
+            function goToNextLevel() { /* ... Same as before ... */
+                currentLevelIndex++;
+                loadLevel(currentLevelIndex);
+            }
+
+            function showGameComplete() { /* ... Same as before ... */
+                questionTextDisplay.textContent = "🎉 Congratulations! 🎉";
+                questionImageContainer.innerHTML = '<p style="font-size:1.6em; line-height:1.7;">You\'ve mastered all the logic challenges!<br>Thanks for playing!</p>';
+                interactiveElementsContainer.innerHTML = '';
+                answerInputContainer.innerHTML = '';
+                feedbackMessageDisplay.textContent = 'Game Over!';
+                feedbackMessageDisplay.className = 'feedback correct';
+                hintButton.classList.add('hidden');
+                skipButton.classList.add('hidden');
+                muteButton.classList.add('hidden'); // Hide music control on game complete too
+                 if (bgMusic && !bgMusic.paused) { // Optionally stop music
+                    bgMusic.pause();
+                }
+            }
+
+            function updateHintsDisplay() { /* ... Same as before ... */
+                hintsRemainingDisplay.textContent = hintsRemaining;
+            }
+
+            // Event Listeners
+            hintButton.addEventListener('click', showHint);
+            skipButton.addEventListener('click', skipLevel);
+            closeButton.onclick = () => { modal.style.display = "none"; }
+            window.onclick = (event) => {
+                if (event.target == modal) modal.style.display = "none";
+            }
+
+            updateMuteButtonVisuals(); // Initial set for the mute button text
+        });
+    </script>
+</body>
+</html>
